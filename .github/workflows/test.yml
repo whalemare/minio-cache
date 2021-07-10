@@ -1,0 +1,40 @@
+name: test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  ezcache:
+    runs-on: [self-hosted]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+
+      - name: Restore yarn cache
+        id: cache
+        uses: ./
+        with:
+          endpoint: "192.168.1.63" # optional, default s3.amazonaws.com
+          port: 9000
+          insecure: true # optional, use http instead of https. default false
+          accessKey: "minioadmin" # required
+          secretKey: "minioadmin" # required
+          bucket: fitbase # required
+          use-fallback: false # optional, use github actions cache fallback, default true
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          path: |
+            node_modules
+            ~/node_modules
+
+      - name: Yarn install
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: yarn install
+
+      - name: Check that dependency installed
+        run: yarn ts-jest -v
+
