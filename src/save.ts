@@ -11,8 +11,14 @@ async function saveCache() {
   try {
     const bucket = core.getInput("bucket", { required: true });
     const key = core.getInput("key", { required: true });
-    const useFallback = getInputAsBoolean("use-fallback");
     const paths = getInputAsArray("path");
+    core.info(`
+      saveCache
+
+      bucket = ${bucket}
+      key = ${key}
+      paths = ${paths}
+    `)
 
     const isCacheHit = getCacheHitOutput(key)
     if (isCacheHit) {
@@ -49,13 +55,6 @@ async function saveCache() {
       core.info("Cache saved to s3 successfully");
     } catch (e) {
       core.info("Save s3 cache failed: " + e.message);
-      if (useFallback) {
-        core.info("Saving cache using fallback");
-        await cache.saveCache(paths, key);
-        core.info("Save cache using fallback successfully");
-      } else {
-        core.info("skipped fallback cache");
-      }
     }
   } catch (e) {
     core.info("warning: " + e.message);

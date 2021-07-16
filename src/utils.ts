@@ -57,50 +57,48 @@ export function formatSize(value?: number, format = "bi") {
 
 export function setCacheHitOutput(key: string, isCacheHit: boolean): void {
   core.setOutput("cache-hit", isCacheHit.toString());
-  core.saveState(`cache-hit-${key}`, isCacheHit)
+  if (isCacheHit) {
+    core.saveState(`cache-hit-${key}`, isCacheHit)
+  }
 }
 
 export function getCacheHitOutput(key: string): boolean {
   const state = core.getState(`cache-hit-${key}`)
   core.info(`state for key ${key} = ${state}`)
-  return state === "true"
+  return !!(state === "true")
 }
 
 export async function findObject(
   mc: minio.Client,
   bucket: string,
-  keys: string[],
+  key: string,
   compressionMethod: CompressionMethod
 ): Promise<minio.BucketItem> {
-  core.info("Restore keys: " + JSON.stringify(keys));
-  for (const key of keys) {
-    const fn = utils.getCacheFileName(compressionMethod);
-    core.info(`Finding object with prefix: ${key}`);
-    let objects = await listObjects(mc, bucket, key);
-    core.info(`fn ${fn}`)
-    core.info(`Objects, ${JSON.stringify(objects, null, '  ')}`)
-    objects = objects.filter((o) => {
-      const isIncludes = o.name.includes(key)
-      core.info(`objects.filter ${o.name} includes ${key} ? = ${isIncludes}`)
-      return isIncludes
-    });
-    core.info(`Found ${JSON.stringify(objects, null, 2)}`);
-    if (objects.length < 1) {
-      continue;
-    }
-    const sorted = objects.sort(
-      (a, b) => b.lastModified.getTime() - a.lastModified.getTime()
-    );
+  core.info(`Try find object with prefix: ${key}`);
+  const cacheFileName = utils.getCacheFileName(compressionMethod);
+  let objects = await listObjects(mc, bucket);
+  core.info(`fn ${cacheFileName}`)
+  core.info(`Objects, ${JSON.stringify(objects, null, '  ')}`)
+  objects = objects.filter((o) => {
+    const isIncludes = o.name.includes(key)
+    core.info(`objects.filter ${o.name} includes ${key} ? = ${isIncludes}`)
+    return isIncludes
+  });
+  core.info(`Found ${JSON.stringify(objects, null, 2)}`);
+  const sorted = objects.sort(
+    (a, b) => b.lastModified.getTime() - a.lastModified.getTime()
+  );
+  if (sorted.length > 0){
     core.info(`Using latest ${JSON.stringify(sorted[0])}`);
-    return sorted[0];
+    return sorted[0]
   }
+
   throw new Error("Cache item not found");
 }
 
 export function listObjects(
   mc: minio.Client,
   bucket: string,
-  prefix: string
 ): Promise<minio.BucketItem[]> {
   return new Promise((resolve, reject) => {
     console.log(`Try find objects in bucket ${bucket}`)

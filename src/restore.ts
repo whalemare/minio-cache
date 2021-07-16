@@ -6,8 +6,6 @@ import * as path from "path";
 import {
   findObject,
   formatSize,
-  getInputAsArray,
-  getInputAsBoolean,
   newMinio,
   setCacheHitOutput
 } from "./utils";
@@ -31,10 +29,8 @@ async function restoreCache() {
       );
       core.info(`archivePath: ${archivePath}`)
 
-      const keys = [key];
-
-      const obj = await findObject(mc, bucket, keys, compressionMethod);
-      core.info("found cache object");
+      const obj = await findObject(mc, bucket, key, compressionMethod);
+      core.info(`found cache object ${obj.name}`);
       core.info(
         `Downloading cache from s3 to ${archivePath}. bucket: ${bucket}, object: ${obj.name}`
       );
@@ -52,7 +48,7 @@ async function restoreCache() {
     } catch (e) {
       core.info("Restore s3 cache failed: " + e.message);
       setCacheHitOutput(key, false);
-      core.warning("Cache item not found")
+      core.warning(`Cache ${key} not found`)
     }
   } catch (e) {
     core.setFailed(e.message);
