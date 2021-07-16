@@ -80294,7 +80294,7 @@ function restoreCache() {
                     }
                 }
                 else {
-                    core.setFailed(e.message);
+                    core.warning("Cache item not found");
                 }
             }
         }
