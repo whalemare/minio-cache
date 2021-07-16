@@ -3213,34 +3213,32 @@ function formatSize(value, format = "bi") {
 exports.formatSize = formatSize;
 function setCacheHitOutput(key, isCacheHit) {
     core.setOutput("cache-hit", isCacheHit.toString());
-    core.saveState(`cache-hit-${key}`, isCacheHit);
+    if (isCacheHit) {
+        core.saveState(`cache-hit-${key}`, isCacheHit);
+    }
 }
 exports.setCacheHitOutput = setCacheHitOutput;
 function getCacheHitOutput(key) {
     const state = core.getState(`cache-hit-${key}`);
     core.info(`state for key ${key} = ${state}`);
-    return !!state;
+    return !!(state === "true");
 }
 exports.getCacheHitOutput = getCacheHitOutput;
-function findObject(mc, bucket, keys, compressionMethod) {
+function findObject(mc, bucket, key, compressionMethod) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info("Restore keys: " + JSON.stringify(keys));
-        for (const key of keys) {
-            const fn = utils.getCacheFileName(compressionMethod);
-            core.info(`Finding object with prefix: ${key}`);
-            let objects = yield listObjects(mc, bucket, key);
-            core.info(`fn ${fn}`);
-            core.info(`Objects, ${JSON.stringify(objects, null, '  ')}`);
-            objects = objects.filter((o) => {
-                const isIncludes = o.name.includes(key);
-                core.info(`objects.filter ${o.name} includes ${key} ? = ${isIncludes}`);
-                return isIncludes;
-            });
-            core.info(`Found ${JSON.stringify(objects, null, 2)}`);
-            if (objects.length < 1) {
-                continue;
-            }
-            const sorted = objects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+        core.info(`Try find object with prefix: ${key}`);
+        const cacheFileName = utils.getCacheFileName(compressionMethod);
+        let objects = yield listObjects(mc, bucket);
+        core.info(`fn ${cacheFileName}`);
+        core.info(`Objects, ${JSON.stringify(objects, null, '  ')}`);
+        objects = objects.filter((o) => {
+            const isIncludes = o.name.includes(key);
+            core.info(`objects.filter ${o.name} includes ${key} ? = ${isIncludes}`);
+            return isIncludes;
+        });
+        core.info(`Found ${JSON.stringify(objects, null, 2)}`);
+        const sorted = objects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+        if (sorted.length > 0) {
             core.info(`Using latest ${JSON.stringify(sorted[0])}`);
             return sorted[0];
         }
@@ -3248,7 +3246,7 @@ function findObject(mc, bucket, keys, compressionMethod) {
     });
 }
 exports.findObject = findObject;
-function listObjects(mc, bucket, prefix) {
+function listObjects(mc, bucket) {
     return new Promise((resolve, reject) => {
         console.log(`Try find objects in bucket ${bucket}`);
         const buckets = mc.listObjectsV2(bucket, undefined, true);
@@ -39902,9 +39900,8 @@ function restoreCache() {
                 core.info(`Cache file name: ${cacheFileName}`);
                 const archivePath = path.join(yield utils.createTempDirectory(), cacheFileName);
                 core.info(`archivePath: ${archivePath}`);
-                const keys = [key];
-                const obj = yield utils_1.findObject(mc, bucket, keys, compressionMethod);
-                core.info("found cache object");
+                const obj = yield utils_1.findObject(mc, bucket, key, compressionMethod);
+                core.info(`found cache object ${obj.name}`);
                 core.info(`Downloading cache from s3 to ${archivePath}. bucket: ${bucket}, object: ${obj.name}`);
                 yield mc.fGetObject(bucket, obj.name, archivePath);
                 if (core.isDebug()) {
@@ -39918,7 +39915,7 @@ function restoreCache() {
             catch (e) {
                 core.info("Restore s3 cache failed: " + e.message);
                 utils_1.setCacheHitOutput(key, false);
-                core.warning("Cache item not found");
+                core.warning(`Cache ${key} not found`);
             }
         }
         catch (e) {
