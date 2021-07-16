@@ -64,7 +64,7 @@ async function restoreCache() {
           core.info("Fallback cache restore failed");
         }
       } else {
-        core.setFailed(e.message)
+        core.warning("Cache item not found")
       }
     }
   } catch (e) {
