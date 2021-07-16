@@ -37132,6 +37132,13 @@ function saveCache() {
     `);
             const isCacheHit = utils_1.getCacheHitOutput(key);
             core.info(`isCacheHit ${isCacheHit}`);
+            if (isCacheHit) {
+                core.info(`Found cache hit for key ${key}, ignore uploading`);
+                // TODO: return
+            }
+            else {
+                core.info(`Cache not found for key ${key}, start uploading`);
+            }
             // if (isCacheHit) {
             //   core.info(`Found cache hit for key ${key}, ignore uploading`)
             //   return
