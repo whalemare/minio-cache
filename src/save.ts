@@ -3,7 +3,7 @@ import * as utils from "@actions/cache/lib/internal/cacheUtils";
 import { createTar, listTar } from "@actions/cache/lib/internal/tar";
 import * as core from "@actions/core";
 import * as path from "path";
-import { getInputAsArray, getInputAsBoolean, newMinio } from "./utils";
+import { getCacheHitOutput, getInputAsArray, getInputAsBoolean, newMinio } from "./utils";
 
 process.on("uncaughtException", (e) => core.info("warning: " + e.message));
 
@@ -14,6 +14,11 @@ async function saveCache() {
     const useFallback = getInputAsBoolean("use-fallback");
     const paths = getInputAsArray("path");
 
+    const isCacheHit = getCacheHitOutput(key)
+    if (isCacheHit) {
+      core.info(`Found cache hit for key ${key}, ignore uploading`)
+      return
+    }
     try {
       const mc = newMinio();
 

@@ -55,8 +55,13 @@ export function formatSize(value?: number, format = "bi") {
   );
 }
 
-export function setCacheHitOutput(isCacheHit: boolean): void {
+export function setCacheHitOutput(key: string, isCacheHit: boolean): void {
   core.setOutput("cache-hit", isCacheHit.toString());
+  core.saveState(`cache-hit-${key}`, isCacheHit)
+}
+
+export function getCacheHitOutput(key: string): boolean {
+  return !!core.getState(`cache-hit-${key}`)
 }
 
 export async function findObject(
@@ -73,8 +78,9 @@ export async function findObject(
     core.info(`fn ${fn}`)
     core.info(`Objects, ${JSON.stringify(objects, null, '  ')}`)
     objects = objects.filter((o) => {
-      core.info(`objects.filter ${o.name} includes ${fn} ? = ${o.name.includes(fn)}`)
-      return o.name.includes(fn)
+      const isIncludes = o.name.includes(key)
+      core.info(`objects.filter ${o.name} includes ${key} ? = ${isIncludes}`)
+      return isIncludes
     });
     core.info(`Found ${JSON.stringify(objects, null, 2)}`);
     if (objects.length < 1) {

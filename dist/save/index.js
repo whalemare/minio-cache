@@ -6316,7 +6316,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.listObjects = exports.findObject = exports.setCacheHitOutput = exports.formatSize = exports.getInputAsInt = exports.getInputAsArray = exports.getInputAsBoolean = exports.newMinio = void 0;
+exports.listObjects = exports.findObject = exports.getCacheHitOutput = exports.setCacheHitOutput = exports.formatSize = exports.getInputAsInt = exports.getInputAsArray = exports.getInputAsBoolean = exports.newMinio = void 0;
 const utils = __importStar(__webpack_require__(15));
 const core = __importStar(__webpack_require__(470));
 const minio = __importStar(__webpack_require__(223));
@@ -6362,10 +6362,15 @@ function formatSize(value, format = "bi") {
         (exp ? (k + "MGTPEZY")[exp - 1] + suffix : "byte" + (size !== 1 ? "s" : "")));
 }
 exports.formatSize = formatSize;
-function setCacheHitOutput(isCacheHit) {
+function setCacheHitOutput(key, isCacheHit) {
     core.setOutput("cache-hit", isCacheHit.toString());
+    core.saveState(`cache-hit-${key}`, isCacheHit);
 }
 exports.setCacheHitOutput = setCacheHitOutput;
+function getCacheHitOutput(key) {
+    return !!core.getState(`cache-hit-${key}`);
+}
+exports.getCacheHitOutput = getCacheHitOutput;
 function findObject(mc, bucket, keys, compressionMethod) {
     return __awaiter(this, void 0, void 0, function* () {
         core.info("Restore keys: " + JSON.stringify(keys));
@@ -6376,8 +6381,9 @@ function findObject(mc, bucket, keys, compressionMethod) {
             core.info(`fn ${fn}`);
             core.info(`Objects, ${JSON.stringify(objects, null, '  ')}`);
             objects = objects.filter((o) => {
-                core.info(`objects.filter ${o.name} includes ${fn} ? = ${o.name.includes(fn)}`);
-                return o.name.includes(fn);
+                const isIncludes = o.name.includes(key);
+                core.info(`objects.filter ${o.name} includes ${key} ? = ${isIncludes}`);
+                return isIncludes;
             });
             core.info(`Found ${JSON.stringify(objects, null, 2)}`);
             if (objects.length < 1) {
@@ -76112,6 +76118,11 @@ function saveCache() {
             const key = core.getInput("key", { required: true });
             const useFallback = utils_1.getInputAsBoolean("use-fallback");
             const paths = utils_1.getInputAsArray("path");
+            const isCacheHit = utils_1.getCacheHitOutput(key);
+            if (isCacheHit) {
+                core.info(`Found cache hit for key ${key}, ignore uploading`);
+                return;
+            }
             try {
                 const mc = utils_1.newMinio();
                 const compressionMethod = yield utils.getCompressionMethod();
