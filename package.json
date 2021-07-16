@@ -12,7 +12,7 @@
     "package": "ncc build -o dist/restore src/restore.ts && ncc build -o dist/save src/save.ts",
     "test": "jest",
     "all": "yarn build && yarn package",
-    "release": "npm version patch && yarn all && gh release create -t Release -d=false -n \"\" -p=false && git push --tags"
+    "release": "yarn all && gh release create \"$(npm version patch)\" -t Release -d=false -n \"\" -p=false && git push --tags"
   },
   "dependencies": {
     "@actions/cache": "^1.0.7",
