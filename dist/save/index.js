@@ -6368,7 +6368,9 @@ function setCacheHitOutput(key, isCacheHit) {
 }
 exports.setCacheHitOutput = setCacheHitOutput;
 function getCacheHitOutput(key) {
-    return !!core.getState(`cache-hit-${key}`);
+    const state = core.getState(`cache-hit-${key}`);
+    core.info(`state for key ${key} = ${state}`);
+    return !!state;
 }
 exports.getCacheHitOutput = getCacheHitOutput;
 function findObject(mc, bucket, keys, compressionMethod) {
@@ -76126,13 +76128,15 @@ function saveCache() {
             try {
                 const mc = utils_1.newMinio();
                 const compressionMethod = yield utils.getCompressionMethod();
+                core.info(`Compression method ${compressionMethod}`);
                 const cachePaths = yield utils.resolvePaths(paths);
-                core.info("Cache Paths:");
-                core.info(`${JSON.stringify(cachePaths)}`);
+                core.info(`Cache Paths: ${JSON.stringify(cachePaths)}`);
                 const archiveFolder = yield utils.createTempDirectory();
-                const cacheFileName = utils.getCacheFileName(compressionMethod);
-                const archivePath = path.join(archiveFolder, cacheFileName);
-                core.info(`Archive Path: ${archivePath}`);
+                core.info(`archiveFolder: ${archiveFolder}`);
+                const cacheFileName = utils.getCacheFileName(compressionMethod); // cache.tzst
+                core.info(`cacheFileName: ${cacheFileName}`);
+                const archivePath = path.join(archiveFolder, cacheFileName); // /Volumes/MacintoshHD2/actions-runner/_work/_temp/d251b5bc-37a0-44b0-8df1-ad374bb5440a/cache.tzst
+                core.info(`archivePath: ${archivePath}`);
                 yield tar_1.createTar(archiveFolder, cachePaths, compressionMethod);
                 if (core.isDebug()) {
                     yield tar_1.listTar(archivePath, compressionMethod);

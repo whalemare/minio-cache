@@ -18,9 +18,6 @@ async function restoreCache() {
   try {
     const bucket = core.getInput("bucket", { required: true });
     const key = core.getInput("key", { required: true });
-    const useFallback = getInputAsBoolean("use-fallback");
-    const paths = getInputAsArray("path");
-    const restoreKeys = getInputAsArray("restore-keys");
 
     try {
       const mc = newMinio();
@@ -34,7 +31,7 @@ async function restoreCache() {
       );
       core.info(`archivePath: ${archivePath}`)
 
-      const keys = [key, ...restoreKeys];
+      const keys = [key];
 
       const obj = await findObject(mc, bucket, keys, compressionMethod);
       core.info("found cache object");
@@ -47,7 +44,7 @@ async function restoreCache() {
         await listTar(archivePath, compressionMethod);
       }
 
-      // core.info(`Cache Size: ${formatSize(obj.size)} (${obj.size} bytes)`);
+      core.info(`Cache Size: ${formatSize(obj.size)} (${obj.size} bytes)`);
 
       await extractTar(archivePath, compressionMethod);
       setCacheHitOutput(key, true);
@@ -55,17 +52,7 @@ async function restoreCache() {
     } catch (e) {
       core.info("Restore s3 cache failed: " + e.message);
       setCacheHitOutput(key, false);
-      if (useFallback) {
-        core.info("Restore cache using fallback cache");
-        if (await cache.restoreCache(paths, key, restoreKeys)) {
-          setCacheHitOutput(key, true);
-          core.info("Fallback cache restored successfully");
-        } else {
-          core.info("Fallback cache restore failed");
-        }
-      } else {
-        core.warning("Cache item not found")
-      }
+      core.warning("Cache item not found")
     }
   } catch (e) {
     core.setFailed(e.message);

@@ -61,7 +61,9 @@ export function setCacheHitOutput(key: string, isCacheHit: boolean): void {
 }
 
 export function getCacheHitOutput(key: string): boolean {
-  return !!core.getState(`cache-hit-${key}`)
+  const state = core.getState(`cache-hit-${key}`)
+  core.info(`state for key ${key} = ${state}`)
+  return !!state
 }
 
 export async function findObject(
