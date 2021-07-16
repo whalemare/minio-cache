@@ -37131,10 +37131,11 @@ function saveCache() {
       paths = ${paths}
     `);
             const isCacheHit = utils_1.getCacheHitOutput(key);
-            if (isCacheHit) {
-                core.info(`Found cache hit for key ${key}, ignore uploading`);
-                return;
-            }
+            core.info(`isCacheHit ${isCacheHit}`);
+            // if (isCacheHit) {
+            //   core.info(`Found cache hit for key ${key}, ignore uploading`)
+            //   return
+            // }
             try {
                 const mc = utils_1.newMinio();
                 const compressionMethod = yield utils.getCompressionMethod();

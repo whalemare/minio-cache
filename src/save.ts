@@ -21,10 +21,11 @@ async function saveCache() {
     `)
 
     const isCacheHit = getCacheHitOutput(key)
-    if (isCacheHit) {
-      core.info(`Found cache hit for key ${key}, ignore uploading`)
-      return
-    }
+    core.info(`isCacheHit ${isCacheHit}`)
+    // if (isCacheHit) {
+    //   core.info(`Found cache hit for key ${key}, ignore uploading`)
+    //   return
+    // }
 
     try {
       const mc = newMinio();
