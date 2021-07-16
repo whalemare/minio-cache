@@ -2,7 +2,7 @@
   "name": "actions-cache",
   "license": "MIT",
   "main": "lib/restore.js",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "scripts": {
     "watch": "tsc --watch",
     "build": "tsc",
@@ -12,7 +12,7 @@
     "package": "ncc build -o dist/restore src/restore.ts && ncc build -o dist/save src/save.ts",
     "test": "jest",
     "all": "yarn build && yarn package",
-    "release": "yarn all && gh release create \"$(npm version patch --git-tag-version=false)\" -t Release -d=false -n \"\" -p=false && git commit -m=\"Release\" && git push origin master && git push --tags"
+    "release": "yarn all && gh release create \"$(npm version patch --git-tag-version=false)\" -t Release -d=false -n \"\" -p=false && git add -A && git commit -m=\"Release\" && git push origin master && git push --tags"
   },
   "dependencies": {
     "@actions/cache": "^1.0.7",
